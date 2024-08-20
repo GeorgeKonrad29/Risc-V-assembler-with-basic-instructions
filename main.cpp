@@ -15,6 +15,7 @@ El presente programa consiste de un ensamblador cuyo objetivo es interpretar de 
 #include "bst.hh"
 #include "stack.hh"
 #include "Colectors.hh"
+#include "fileUsage.hh"
 using std::ifstream;
 using std::ofstream;
 using std::string;
@@ -26,150 +27,8 @@ using std::ios;
 using std::to_string;
 
 
-//Funcion que convierte un numero binario a hexadecimal
-string binToHex(Stack<int>* Binario)
-{
-  string hex;
-  hex = "0x";
-  for(int x=0; x < 8; x++)
-  {
-    int decimal = 0;
-    for(int y=0; y < 4; y++)
-    {
-      decimal += Binario->top()*pow(2,3-y);
-      Binario->pop();
-    }
-    if(decimal < 10)
-    {
-      hex += to_string(decimal);
-    }
-    else
-    {
-      hex += (char)(decimal+55);
-    }
-  }
-  return hex;
-}
-void writeToFile(Stack<int>* Binario)
-{
-  string hex;
-  hex = "";
-  hex = binToHex(Binario);
-  ofstream fich("Output.dat", ios::app);
-  if (!fich.is_open())
-  {
-    cout <<"Error al abrir Output.dat\n";
-    exit(EXIT_FAILURE);
-  }
-  fich<<hex<<endl;
-  fich.close();
-}
 
 
-bool empty(string codeline)
-{
-  for (unsigned int positionInString=0; positionInString < codeline.size(); positionInString++)
-  {
-    //se considera vacia si tiene un numeral
-    if(codeline[positionInString] == '#')
-    {
-      return true;
-    }
-    else if(codeline[positionInString] != ' '&& codeline[positionInString] != '\t' && codeline[positionInString] != '\n' && codeline[positionInString] != '\r' && codeline[positionInString] != '\v' && codeline[positionInString] != '\f')
-    {
-      return false;
-    }
-    
-  }
-  return true;
-}
-string deleteIdentation(string &codeline)
-{
-  unsigned int numberOfSpaces=0;
-  while(codeline[numberOfSpaces] == ' ' || codeline[numberOfSpaces] == '\t' || codeline[numberOfSpaces] == '\n' || codeline[numberOfSpaces] == '\r' || codeline[numberOfSpaces] == '\v' || codeline[numberOfSpaces] == '\f')
-  {
-    numberOfSpaces++;
-  }
-  codeline = codeline.substr(numberOfSpaces);
-  return codeline;
-}
-// Funcion que recolecta las instrucciones de un tipo especifico y las almacena en un arbol binario de busqueda
-// para su posterior comparacion 
-
-// Funcion que recolecta la funtion3 de las instrucciones y las monta en un arbol binario de busqueda
-// para posterior comparacion en la funcion func3Calculation
-void fun3Colector(BST<string>& arbol, int x)
-{
-  if(x == 0)
-  {
-    arbol.insert("add");
-    arbol.insert("sub");
-    arbol.insert("addi");
-    arbol.insert("lb");
-    arbol.insert("sb");
-    arbol.insert("beq");
-    arbol.insert("jalr");
-    arbol.insert("ecall");
-    arbol.insert("ebreak");
-    arbol.insert("mul");
-  }
-  else if(x == 1)
-  {
-    arbol.insert("sll");
-    arbol.insert("slli");
-    arbol.insert("lh");
-    arbol.insert("sh");
-    arbol.insert("bne");
-    arbol.insert("mulh");
-  }
-  else if(x == 2)
-  {
-    arbol.insert("slt");
-    arbol.insert("slti");
-    arbol.insert("lw");
-    arbol.insert("sw");
-    arbol.insert("mlsu");
-  }
-  else if(x == 3)
-  {
-    arbol.insert("sltu");
-    arbol.insert("sltiu");
-    arbol.insert("mulu");
-
-  }
-  else if(x == 4)
-  {
-    arbol.insert("xor");
-    arbol.insert("xori");
-    arbol.insert("lbu");
-    arbol.insert("blt");
-    arbol.insert("div");
-  }
-  else if(x == 5)
-  {
-    arbol.insert("srl");
-    arbol.insert("sra");
-    arbol.insert("srli");
-    arbol.insert("srai");
-    arbol.insert("lhu");
-    arbol.insert("bge");
-    arbol.insert("divu");
-  }
-  else if(x == 6)
-  {
-    arbol.insert("or");
-    arbol.insert("ori");
-    arbol.insert("bltu");
-    arbol.insert("rem");
-  }
-  else if(x == 7)
-  {
-    arbol.insert("and");
-    arbol.insert("andi");
-    arbol.insert("bgeu");
-    arbol.insert("remu");
-  }  
-}
 // Funcion que calcula los 7 bits de la funcion7 de las instrucciones ripo R
 void func7Calculation(const string& codeLine, Stack<int>* Binario)
 {
@@ -1107,7 +966,6 @@ void tailGeneration(const Vector<string>& codeline)
   Stack<int>* BinarioJalr = ItypeGeneration(*jalrPart);
   writeToFile(BinarioJalr);
 }
-
 bool pseudoInstructionsTreatments(Vector<string>* codeLine)
 {
   if(codeLine->at(0) == "la")
@@ -1233,46 +1091,11 @@ bool pseudoInstructionsTreatments(Vector<string>* codeLine)
   return true;
 }  
 
+
 int main()
 {
-  ifstream fich("Input.dat", ios::in);
-  if (!fich.is_open())
-  {
-    cout <<"Error al abrir Input.dat\n";
-    exit(EXIT_FAILURE);
-  }
   
-  string line;
-  int num_elementos = 0;
-  // Cuenta el numero de lineas no vacias
-  while (getline(fich, line)) {
-    if(!line.empty() && !empty(line))
-    {
-      num_elementos++;   
-    }   
-  }
-  fich.clear();
-  fich.seekg(0, ios::beg);
-  Vector<string> data;
-  string valor;
-  // Lee los datos no vacios como strings y hace push back a un vector
-  for (int x=0; x < num_elementos; x++)
-  {
-    getline(fich, valor);
-    if(!valor.empty() && !empty(valor))
-    {
-      valor = deleteIdentation(valor);
-      data.push_back(valor);
-    }
-    else
-    {
-      x--;
-    }
-  }
-  fich.close();
-  //hasta esta parte es la lectura del archivo, de aqui en adelante pasamos a las conversiones a binario
-  //A continuacion clasificaremos que tipo de instruccion es y la convertiremos a binario
-  //Para ello usaremos un arbol binario de busqueda
+  Vector<string> data= readFromFile();
   BST<string> Rtype, Itype, Jtype, Stype, Utype, Btype, pseudoInstructions;
   Rtype = InstructionsColector("r");
   Itype = InstructionsColector("i");
@@ -1282,57 +1105,57 @@ int main()
   Btype = InstructionsColector("b");
   pseudoInstructions = InstructionsColector("p");
   //A continuacion se hara la identificacion de las instrucciones y su conversion a binario o hexadecimal
-  for (unsigned int x=0; x < data.getSize(); x++)
+  for (unsigned int actualLine=0; actualLine < data.getSize(); actualLine++)
   {
     
-    string codeLine = data.at(x);
+    string codeLine = data.at(actualLine);
     bool flag;
     flag = false;
     Vector<string>* segmentedLine = new Vector<string>;
     segmentedLine = split(codeLine);
-    cout<<"linea de codigo "<<x<<" "<<segmentedLine->at(0)<<endl;
+    cout<<"linea de codigo "<<actualLine<<" "<<segmentedLine->at(0)<<endl;
     Stack<int>* Binario = new Stack<int>(32);
      if(pseudoInstructions.find(segmentedLine->at(0)))
     {
       if (segmentedLine->at(0)[3]=='z')
       {
-        int y;
-        y=0;
-        while(data.at(y) != (segmentedLine->at(2)+':'))
+        int searchLine;
+        searchLine=0;
+        while(data.at(searchLine) != (segmentedLine->at(2)+':'))
         {
-          y++;  
+          searchLine++;  
         }
-        y = y-x;
-        y = y*4;
+        searchLine = searchLine-actualLine;
+        searchLine = searchLine*4;
         segmentedLine->pop_back();
-        segmentedLine->push_back(to_string(y));
+        segmentedLine->push_back(to_string(searchLine));
       }
       else if(segmentedLine->at(0)[0]=='b' && segmentedLine->getSize() == 4)
       {
-        int y;
-        y=0;
-        while(data.at(y) != (segmentedLine->at(3)+':'))
+        int searchLine;
+        searchLine=0;
+        while(data.at(searchLine) != (segmentedLine->at(3)+':'))
         {
-          y++;  
+          searchLine++;  
         }
-        y = y-x;
-        y = y*4;
+        searchLine = searchLine-actualLine;
+        searchLine = searchLine*4;
         segmentedLine->pop_back();
-        segmentedLine->push_back(to_string(y));
+        segmentedLine->push_back(to_string(searchLine));
       }
       else if(segmentedLine->getSize() == 2 && !(segmentedLine->at(0) == "jr" || segmentedLine->at(0) == "jalr"))
       {
         cout<<"entro"<<endl;
-        int y;
-        y=0;
-        while(data.at(y) != (segmentedLine->at(1)+':'))
+        int searchLine;
+        searchLine=0;
+        while(data.at(searchLine) != (segmentedLine->at(1)+':'))
         {
-          y++;  
+          searchLine++;  
         }
-        y = y-x;
-        y = y*4;
+        searchLine = searchLine-actualLine;
+        searchLine = searchLine*4;
         segmentedLine->pop_back();
-        segmentedLine->push_back(to_string(y));
+        segmentedLine->push_back(to_string(searchLine));
       }
       flag = pseudoInstructionsTreatments(segmentedLine);
     }
@@ -1346,15 +1169,15 @@ int main()
     }
     else if(Btype.find(segmentedLine->at(0)) && !flag)
     {
-      int y;
-      y=0;
-      while(data.at(y) != (segmentedLine->at(3)+':'))
+      int searchLine;
+      searchLine=0;
+      while(data.at(searchLine) != (segmentedLine->at(3)+':'))
       {
-        y++;  
+        searchLine++;  
       }
-      y = y-x;
-      y = y*4;
-      Binario = BtypeGeneration(*segmentedLine, y);
+      searchLine = searchLine-actualLine;
+      searchLine = searchLine*4;
+      Binario = BtypeGeneration(*segmentedLine, searchLine);
     }
     if(Itype.find(segmentedLine->at(0)) && !flag)
     {
@@ -1364,15 +1187,15 @@ int main()
     else if(Jtype.find(segmentedLine->at(0)) && !flag)
     {
       cout<<"entro a Jtype"<<endl;
-      int y;
-      y=0;
-      while(data.at(y) != (segmentedLine->at(2)+':'))
+      int searchLine;
+      searchLine=0;
+      while(data.at(searchLine) != (segmentedLine->at(2)+':'))
       {
-        y++;  
+        searchLine++;  
       }
-      y = y-x;
-      y = y*4;
-      Binario = JtypeGeneration(*segmentedLine, y);
+      searchLine = searchLine-actualLine;
+      searchLine = searchLine*4;
+      Binario = JtypeGeneration(*segmentedLine, searchLine);
     }
     else if(Stype.find(segmentedLine->at(0)) && !flag)
     {
